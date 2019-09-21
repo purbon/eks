@@ -1,8 +1,8 @@
-package com.purbon.kstreams.hackathon;
+package com.purbon.kstreams;
 
-import com.purbon.kstreams.hackathon.processors.CountingTransformer;
-import com.purbon.kstreams.hackathon.store.ElasticsearchStateStore;
-import com.purbon.kstreams.hackathon.store.ElasticsearchStoreBuilder;
+import com.purbon.kstreams.processors.CountingTransformer;
+import com.purbon.kstreams.eks.ElasticsearchStateStore;
+import com.purbon.kstreams.eks.ElasticsearchStoreBuilder;
 import java.util.Properties;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;

@@ -1,7 +1,7 @@
-package com.purbon.kstreams.hackathon;
+package com.purbon.kstreams;
 
-import com.purbon.kstreams.hackathon.serdes.JsonPOJODeserializer;
-import com.purbon.kstreams.hackathon.serdes.JsonPOJOSerializer;
+import com.purbon.kstreams.serdes.JsonPOJODeserializer;
+import com.purbon.kstreams.serdes.JsonPOJOSerializer;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Deserializer;

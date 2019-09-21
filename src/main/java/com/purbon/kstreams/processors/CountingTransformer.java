@@ -1,12 +1,11 @@
-package com.purbon.kstreams.hackathon.processors;
+package com.purbon.kstreams.processors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.purbon.kstreams.hackathon.store.Document;
-import com.purbon.kstreams.hackathon.store.ElasticsearchStateStore;
+import com.purbon.kstreams.eks.Document;
+import com.purbon.kstreams.eks.ElasticsearchStateStore;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;

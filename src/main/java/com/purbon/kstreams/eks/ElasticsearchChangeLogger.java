@@ -1,4 +1,4 @@
-package com.purbon.kstreams.hackathon.store;
+package com.purbon.kstreams.eks;
 
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.processor.ProcessorContext;

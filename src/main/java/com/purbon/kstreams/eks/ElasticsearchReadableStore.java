@@ -1,4 +1,4 @@
-package com.purbon.kstreams.hackathon.store;
+package com.purbon.kstreams.eks;
 
 public interface ElasticsearchReadableStore<K,V>  {
 

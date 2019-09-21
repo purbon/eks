@@ -1,7 +1,7 @@
-package com.purbon.kstreams.hackathon.processors;
+package com.purbon.kstreams.processors;
 
-import com.purbon.kstreams.hackathon.store.Document;
-import com.purbon.kstreams.hackathon.store.ElasticsearchStateStore;
+import com.purbon.kstreams.eks.Document;
+import com.purbon.kstreams.eks.ElasticsearchStateStore;
 import java.util.HashMap;
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;

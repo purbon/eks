@@ -1,8 +1,8 @@
 import static org.hamcrest.core.IsEqual.equalTo;
 
-import com.purbon.kstreams.hackathon.store.Document;
-import com.purbon.kstreams.hackathon.store.ElasticsearchStateStore;
-import com.purbon.kstreams.hackathon.store.ElasticsearchStoreBuilder;
+import com.purbon.kstreams.eks.Document;
+import com.purbon.kstreams.eks.ElasticsearchStateStore;
+import com.purbon.kstreams.eks.ElasticsearchStoreBuilder;
 import java.util.Properties;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
