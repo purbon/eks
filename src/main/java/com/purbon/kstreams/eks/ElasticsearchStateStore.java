@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.purbon.kstreams.SerdesFactory;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -15,13 +18,19 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.state.StateSerdes;
+import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 public class ElasticsearchStateStore implements StateStore, ElasticsearchWritableStore<String, Document> {
 
@@ -53,7 +62,7 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
     GetRequest request = new GetRequest(INDEX, INDEX, key);
     Document doc = null;
     try {
-      GetResponse response = client.get(request);
+      GetResponse response = client.get(request, RequestOptions.DEFAULT);
 
       String source = response.getSourceAsString();
       doc = mapper.readValue(source, Document.class);
@@ -63,6 +72,35 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
     }
 
     return doc;
+  }
+
+  @Override
+  public List<Document> search(String words, String... fields) {
+    if (words.length() == 0) {
+      return new ArrayList<>();
+    }
+
+    List<Document> results = new ArrayList<>();
+
+    SearchRequest request = new SearchRequest(INDEX);
+
+    SearchSourceBuilder builder = new SearchSourceBuilder();
+    builder.query(QueryBuilders.multiMatchQuery(words, fields));
+    request.source(builder);
+
+    try {
+      SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+      for (SearchHit hit : response.getHits()) {
+        String source = hit.getSourceAsString();
+        Document doc = mapper.readValue(source, Document.class);
+        results.add(doc);
+      }
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return results;
   }
 
   @Override
@@ -131,6 +169,13 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
 
   @Override
   public void flush() {
+    FlushRequest request = new FlushRequest(INDEX);
+    try {
+      client.indices().flush(request, RequestOptions.DEFAULT);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
     changeLogger.logChange(key, value, updateTimestamp);
   }
 

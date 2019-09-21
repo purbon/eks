@@ -1,5 +1,6 @@
 package com.purbon.kstreams.eks;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.apache.kafka.streams.state.QueryableStoreType;
@@ -30,5 +31,18 @@ public class ElasticsearchStateStoreWrapper<K,V> implements ElasticsearchReadabl
         .findFirst();
 
     return value.map(store -> store.read(key)).orElse(null);
+  }
+
+  @Override
+  public List<V> search(String words, String ... fields) {
+
+    List<ElasticsearchReadableStore<K,V>> stores = provider.stores(storeName, elasticsearchStoreType);
+    Optional<ElasticsearchReadableStore<K,V>> value = stores
+        .stream()
+        .filter(store -> store.search(words, fields) != null)
+        .findFirst();
+
+    return value.map(store -> store.search(words, fields)).orElse(new ArrayList<>());
+
   }
 }

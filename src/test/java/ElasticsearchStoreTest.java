@@ -1,8 +1,12 @@
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 import com.purbon.kstreams.eks.Document;
 import com.purbon.kstreams.eks.ElasticsearchStateStore;
 import com.purbon.kstreams.eks.ElasticsearchStoreBuilder;
+import java.util.List;
 import java.util.Properties;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -27,6 +31,33 @@ public class ElasticsearchStoreTest {
   public static final String SOURCE_TOPIC = "source-topic";
   public static final String TARGET_TOPIC = "target-topic";
   private static ElasticsearchContainer container;
+
+
+  private class TestTransformer implements Transformer<String, String, KeyValue<String, String>> {
+
+    private ElasticsearchStateStore store;
+
+    @Override
+    public void init(ProcessorContext context) {
+      this.store = (ElasticsearchStateStore) context.getStateStore(ElasticsearchStateStore.STORE_NAME);
+    }
+
+    @Override
+    public KeyValue<String, String> transform(String key, String value) {
+
+      Document<String, String> doc = new Document<>();
+      doc.docId = key;
+      doc.content.put("title", value.toLowerCase());
+      store.write(key, doc);
+      return new KeyValue<>(key, value.toLowerCase());
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+  }
 
   @Before
   public void before() throws InterruptedException {
@@ -67,30 +98,7 @@ public class ElasticsearchStoreTest {
   @Test
   public void testStoreSetup() {
 
-    TopologyTestDriver driver = buildTopologyDriver(
-        () -> new Transformer<String, String, KeyValue<String, String>>() {
-          private ElasticsearchStateStore store;
-
-          @Override
-          public void init(ProcessorContext context) {
-            this.store = (ElasticsearchStateStore) context.getStateStore(ElasticsearchStateStore.STORE_NAME);
-          }
-
-          @Override
-          public KeyValue<String, String> transform(String key, String value) {
-
-            Document<String, String> doc = new Document<>();
-            doc.docId = key;
-            doc.content.put("title", value.toLowerCase());
-            store.write(key, doc);
-            return new KeyValue<>(key, value.toLowerCase());
-          }
-
-          @Override
-          public void close() {
-
-          }
-        });
+    TopologyTestDriver driver = buildTopologyDriver(TestTransformer::new);
 
     ConsumerRecordFactory<String, String> factory = new ConsumerRecordFactory<>(SOURCE_TOPIC, new StringSerializer(), new StringSerializer());
 
@@ -102,6 +110,26 @@ public class ElasticsearchStoreTest {
     Document<String, String> doc = store.read("driver");
     Assert.assertThat(doc.content.get("title"), equalTo("this is a value for the driver"));
 
+    driver.close();
+  }
+
+  @Test
+  public void testStoreSearch() {
+    TopologyTestDriver driver = buildTopologyDriver(TestTransformer::new);
+
+    ConsumerRecordFactory<String, String> factory = new ConsumerRecordFactory<>(SOURCE_TOPIC, new StringSerializer(), new StringSerializer());
+
+    driver.pipeInput(factory.create(SOURCE_TOPIC, "driver", "this is a value for the DRIVER"));
+    driver.pipeInput(factory.create(SOURCE_TOPIC, "streams", "kafka streams is EASY"));
+
+    ElasticsearchStateStore store = (ElasticsearchStateStore)driver.getStateStore(ElasticsearchStateStore.STORE_NAME);
+    store.flush();
+
+    List<Document> results = store.search("streams", "content.title");
+
+    Assert.assertEquals(1, results.size());
+    //assertThat(results.get(0).content, hasKey("title"));
+    assertThat(results.get(0).content.get("title").toString(), containsString("streams"));
     driver.close();
   }
 }
