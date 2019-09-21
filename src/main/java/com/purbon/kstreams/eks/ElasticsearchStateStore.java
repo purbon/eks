@@ -34,6 +34,7 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
   private long updateTimestamp;
   private Document value;
   private String key;
+  private Serde<Document> docSerdes;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -108,7 +109,7 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
         .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider))
     );
 
-        Serde<Document> docSerdes = SerdesFactory.from(Document.class);
+    docSerdes = SerdesFactory.from(Document.class);
 
     StateSerdes<String,Document> serdes = new StateSerdes(
         name(),
@@ -119,8 +120,10 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
 
     context.register(this, (key, value) -> {
       // here the store restore should happen from the changelog topic.
+      String sKey = new String(key);
+      Document docValue = docSerdes.deserializer().deserialize(sKey, value);
+      write(sKey, docValue);
     });
-
 
   }
 
