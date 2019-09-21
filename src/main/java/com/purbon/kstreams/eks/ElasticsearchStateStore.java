@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.purbon.kstreams.SerdesFactory;
 import java.io.IOException;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -17,6 +18,7 @@ import org.apache.kafka.streams.state.StateSerdes;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -148,7 +150,12 @@ public class ElasticsearchStateStore implements StateStore, ElasticsearchWritabl
 
   @Override
   public boolean isOpen() {
-    return false;
+    try {
+      return client.ping(RequestOptions.DEFAULT);
+    } catch (IOException e) {
+      e.printStackTrace();
+      return false;
+    }
   }
 
 }
